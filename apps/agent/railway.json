@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm build",
+  "startCommand": "pnpm start",
+  "rootDirectory": "/apps/agent",
+  "watchPaths": ["/apps/agent/src/**", "/packages/shared/src/**"]
+}
