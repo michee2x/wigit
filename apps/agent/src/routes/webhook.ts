@@ -4,10 +4,40 @@ import { supabase } from '../lib/supabase'
 import { QR_PARAM_REGEX } from '../lib/constants'
 import { getOrCreateSession, saveLog, getConversationHistory } from '../services/session'
 import { sendWhatsAppMessage } from '../services/whatsapp'
-import { callClaude } from '../services/claude'
+import { callGemini } from '../services/gemini'
 import { handleServiceRequest } from '../services/intent'
 import { callBusinessWebhook } from '../services/businessWebhook'
-import type { WhatsAppTextMessage } from '@wigit/shared'
+
+// ─── Zod schema for Meta WhatsApp webhook payload ─────────────────────────────
+const WhatsAppWebhookSchema = z.object({
+  object: z.string(),
+  entry: z.array(z.object({
+    id: z.string(),
+    changes: z.array(z.object({
+      value: z.object({
+        messaging_product: z.string(),
+        metadata: z.object({
+          display_phone_number: z.string(),
+          phone_number_id: z.string(),
+        }),
+        contacts: z.array(z.object({
+          profile: z.object({ name: z.string() }),
+          wa_id: z.string(),
+        })).optional(),
+        messages: z.array(z.object({
+          from: z.string(),
+          id: z.string(),
+          timestamp: z.string(),
+          text: z.object({ body: z.string() }),
+          type: z.string(),
+        })).optional(),
+      }),
+      field: z.string(),
+    })),
+  })),
+})
+
+type ValidatedWhatsAppPayload = z.infer<typeof WhatsAppWebhookSchema>
 
 export const webhookRouter = Router()
 
@@ -31,14 +61,20 @@ webhookRouter.post('/', (req: Request, res: Response) => {
   // Respond to Meta IMMEDIATELY — must be under 200ms
   res.sendStatus(200)
 
-  // Process asynchronously
-  processIncomingMessage(req.body as WhatsAppTextMessage).catch((err) => {
+  // Validate payload with Zod, then process asynchronously
+  const parsed = WhatsAppWebhookSchema.safeParse(req.body)
+  if (!parsed.success) {
+    console.warn('[webhook] Invalid payload shape:', parsed.error.issues)
+    return
+  }
+
+  processIncomingMessage(parsed.data).catch((err) => {
     console.error('[webhook] Unhandled error in message processing:', err)
   })
 })
 
 // ─── Core async processing logic ──────────────────────────────────────────────
-async function processIncomingMessage(body: WhatsAppTextMessage): Promise<void> {
+async function processIncomingMessage(body: ValidatedWhatsAppPayload): Promise<void> {
   try {
     // 1. Extract message data from Meta payload
     const entry = body?.entry?.[0]
@@ -118,8 +154,8 @@ async function processIncomingMessage(body: WhatsAppTextMessage): Promise<void> 
     // 6. Fetch conversation history for context
     const history = await getConversationHistory(session.id)
 
-    // 7. Call Claude for intent detection
-    const intentResponse = await callClaude(businessName, roomNumber, history, messageText)
+    // 7. Call Gemini for intent detection
+    const intentResponse = await callGemini(businessName, roomNumber, history, messageText)
 
     let replyText: string
 
@@ -137,8 +173,8 @@ async function processIncomingMessage(body: WhatsAppTextMessage): Promise<void> 
         api_key: apiKey ?? '',
       })
 
-      // Feed the answer back to Claude to format a nice reply
-      const followUp = await callClaude(
+      // Feed the answer back to Gemini to format a nice reply
+      const followUp = await callGemini(
         businessName,
         roomNumber,
         [...history, { role: 'user', content: messageText }],

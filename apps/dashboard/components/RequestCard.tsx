@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, Clock } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
+import type { ServiceRequest } from "@wigit/shared"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,14 +12,7 @@ const supabase = createClient(
 )
 
 interface RequestCardProps {
-  request: {
-    id: string
-    room: string
-    items: string[]
-    raw_message: string
-    status: string
-    created_at: string
-  }
+  request: ServiceRequest
 }
 
 export function RequestCard({ request }: RequestCardProps) {

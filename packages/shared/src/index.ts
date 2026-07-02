@@ -39,7 +39,7 @@ export type Intent =
   | 'greeting'
   | 'unclear'
 
-export type ClaudeIntentResponse = {
+export type AIIntentResponse = {
   intent: Intent
   items?: string[]
   reply?: string | null

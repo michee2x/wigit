@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@supabase/supabase-js"
 import { RequestCard } from "./RequestCard"
+import type { ServiceRequest } from "@wigit/shared"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,11 +12,11 @@ const supabase = createClient(
 
 interface StaffQueueProps {
   businessId: string
-  initialRequests: any[]
+  initialRequests: ServiceRequest[]
 }
 
 export function StaffQueue({ businessId, initialRequests }: StaffQueueProps) {
-  const [requests, setRequests] = useState<any[]>(initialRequests)
+  const [requests, setRequests] = useState<ServiceRequest[]>(initialRequests)
 
   useEffect(() => {
     // Subscribe to realtime changes
@@ -27,7 +28,7 @@ export function StaffQueue({ businessId, initialRequests }: StaffQueueProps) {
         table: 'requests',
         filter: `business_id=eq.${businessId}`
       }, (payload) => {
-        setRequests(prev => [payload.new, ...prev])
+        setRequests(prev => [payload.new as ServiceRequest, ...prev])
       })
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -35,7 +36,8 @@ export function StaffQueue({ businessId, initialRequests }: StaffQueueProps) {
         table: 'requests',
         filter: `business_id=eq.${businessId}`
       }, (payload) => {
-        setRequests(prev => prev.map(r => r.id === payload.new.id ? payload.new : r))
+        const updated = payload.new as ServiceRequest
+        setRequests(prev => prev.map(r => r.id === updated.id ? updated : r))
       })
       .subscribe()
 

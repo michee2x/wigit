@@ -1,4 +1,4 @@
-import type { ClaudeIntentResponse } from '@wigit/shared'
+import type { AIIntentResponse } from '@wigit/shared'
 import { supabase } from '../lib/supabase'
 
 /**
@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
  * Supabase Realtime will push the new row to the staff dashboard instantly.
  */
 export async function handleServiceRequest(
-  intentResponse: ClaudeIntentResponse,
+  intentResponse: AIIntentResponse,
   sessionId: string,
   businessId: string,
   room: string,

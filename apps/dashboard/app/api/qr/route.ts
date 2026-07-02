@@ -26,7 +26,10 @@ export async function POST(req: Request) {
       return new NextResponse("Business not found", { status: 404 })
     }
 
-    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2340000000000" // Replace with actual number
+    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
+    if (!whatsappNumber) {
+      return new NextResponse("WhatsApp number not configured", { status: 500 })
+    }
     const text = encodeURIComponent(`ROOM:${room}|KEY:${business.api_key}`)
     const waLink = `https://wa.me/${whatsappNumber}?text=${text}`
 
