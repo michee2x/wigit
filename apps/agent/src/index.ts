@@ -25,12 +25,12 @@ app.get('/health', (_req, res) => {
 app.use('/webhook', webhookRouter)
 
 // ─── Start server ─────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT as number, '0.0.0.0', () => {
   console.log(`
   ╔══════════════════════════════════════╗
   ║   Wigit AI Agent — Running           ║
   ║   Port: ${PORT}                          ║
-  ║   Webhook: http://localhost:${PORT}/webhook ║
+  ║   Webhook: http://0.0.0.0:${PORT}/webhook    ║
   ╚══════════════════════════════════════╝
   `)
 })
