@@ -61,10 +61,14 @@ webhookRouter.post('/', (req: Request, res: Response) => {
   // Respond to Meta IMMEDIATELY — must be under 200ms
   res.sendStatus(200)
 
+  console.log('[webhook] 🛑 RAW POST REQUEST RECEIVED 🛑')
+  console.log('[webhook] Headers:', JSON.stringify(req.headers))
+  console.log('[webhook] Body:', JSON.stringify(req.body, null, 2))
+
   // Validate payload with Zod, then process asynchronously
   const parsed = WhatsAppWebhookSchema.safeParse(req.body)
   if (!parsed.success) {
-    console.warn('[webhook] Invalid payload shape:', parsed.error.issues)
+    console.warn('[webhook] Invalid payload shape:', JSON.stringify(parsed.error.issues, null, 2))
     return
   }
 
